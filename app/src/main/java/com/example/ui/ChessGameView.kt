@@ -22,6 +22,7 @@ import com.example.viewmodel.ChatViewModel
 fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", peerId: String = "NONE", isHost: Boolean = true, difficulty: String = "medium") {
     var selectedSquare by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var board by remember { mutableStateOf(initChessBoard()) }
+    var chessSkin by remember { mutableStateOf("Classic") }
     
     var turn by remember { mutableStateOf('w') }
     val isMulti = mode == "multi"
@@ -45,10 +46,11 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
                     val fromY = parts[3].toInt()
                     val toX = parts[4].toInt()
                     val toY = parts[5].toInt()
+                    val promoted = if (parts.size > 6) parts[6] else null
                     
                     val b = board.map { it.clone() }.toTypedArray()
                     if (b[fromY][fromX] != " ") {
-                        b[toY][toX] = b[fromY][fromX]
+                        b[toY][toX] = promoted ?: b[fromY][fromX]
                         b[fromY][fromX] = " "
                         board = b
                         turn = if (turn == 'w') 'b' else 'w'
@@ -69,7 +71,9 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
             if (move != null) {
                 val (from, to) = move
                 val b = board.map { it.clone() }.toTypedArray()
-                b[to.second][to.first] = b[from.second][from.first]
+                var piece = b[from.second][from.first]
+                if (piece == "bP" && to.second == 7) piece = "bQ"
+                b[to.second][to.first] = piece
                 b[from.second][from.first] = " "
                 board = b
                 turn = 'w'
@@ -77,7 +81,7 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         androidx.compose.animation.AnimatedVisibility(visible = winner != null) {
             Card(
                 colors = CardDefaults.cardColors(
@@ -130,10 +134,24 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
             }
         }
 
-        Text("Chess Sandbox", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp)) {
+            Text("Chess Sandbox", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
+            var expanded by remember { mutableStateOf(false) }
+            Box {
+                OutlinedButton(onClick = { expanded = true }) {
+                    Text(chessSkin)
+                }
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenuItem(text = { Text("Classic") }, onClick = { chessSkin = "Classic"; expanded = false })
+                    DropdownMenuItem(text = { Text("Outlined") }, onClick = { chessSkin = "Outlined"; expanded = false })
+                    DropdownMenuItem(text = { Text("Neon") }, onClick = { chessSkin = "Neon"; expanded = false })
+                    DropdownMenuItem(text = { Text("Wood") }, onClick = { chessSkin = "Wood"; expanded = false })
+                }
+            }
+        }
         Text(if (winner != null) "Game Over" else if (turn == myColor && isMulti) "Your Turn ($myColor)" else if (isMulti) "Opponent's Turn" else "Turn: $turn", modifier = Modifier.padding(bottom = 8.dp))
         
-        Box(modifier = Modifier.size(320.dp).border(2.dp, Color.Black)) {
+        Box(modifier = Modifier.fillMaxWidth().aspectRatio(1f).padding(16.dp).border(2.dp, Color.Black)) {
             Column(modifier = Modifier.fillMaxSize()) {
                 for (rY in 0..7) {
                     Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -141,7 +159,11 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
                             val x = if (isHost || !isMulti) rX else 7 - rX
                             val y = if (isHost || !isMulti) rY else 7 - rY
                             val isSelected = selectedSquare?.first == x && selectedSquare?.second == y
-                            val bg = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha=0.5f) else if ((rX + rY) % 2 == 0) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.background
+                            val isDarkSquare = (x + y) % 2 != 0
+                            val bg = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha=0.5f) 
+                                     else if (chessSkin == "Wood") { if (isDarkSquare) Color(0xFF8B5A2B) else Color(0xFFDEB887) }
+                                     else if (chessSkin == "Neon") { if (isDarkSquare) Color(0xFF111122) else Color(0xFF222244) }
+                                     else { if (!isDarkSquare) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.background }
                             
                             Box(
                                 modifier = Modifier
@@ -164,7 +186,7 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
                                                 if (fx == x && fy == y) {
                                                     selectedSquare = null
                                                 } else {
-                                                    val piece = board[fy][fx]
+                                                    var piece = board[fy][fx]
                                                     val target = board[y][x]
                                                     if (target != " " && target.first() == piece.first()) {
                                                         if (!isMulti || piece.first() == myColor) {
@@ -175,12 +197,16 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
                                                     if (!isValidChessMove(board, fx, fy, x, y)) {
                                                         return@detectTapGestures
                                                     }
+                                                    
+                                                    if (piece == "wP" && y == 0) piece = "wQ"
+                                                    if (piece == "bP" && y == 7) piece = "bQ"
+
                                                     val b = board.map { it.clone() }.toTypedArray()
                                                     b[y][x] = piece
                                                     b[fy][fx] = " "
                                                     board = b
                                                     turn = if (turn == 'w') 'b' else 'w'
-                                                    if (isMulti) viewModel?.sendGameState("chess|move|$fx|$fy|$x|$y", peerId)
+                                                    if (isMulti) viewModel?.sendGameState("chess|move|$fx|$fy|$x|$y|$piece", peerId)
                                                     selectedSquare = null
                                                 }
                                             }
@@ -190,11 +216,16 @@ fun ChessGameView(viewModel: ChatViewModel? = null, mode: String = "single", pee
                             ) {
                                 val piece = board[y][x]
                                 if (piece != " ") {
-                                    val pieceColor = if (piece.first() == 'w') MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.primary
+                                    val pieceColor = if (chessSkin == "Neon") {
+                                        if (piece.first() == 'w') Color(0xFF00FFFF) else Color(0xFFFF00FF)
+                                    } else {
+                                        if (piece.first() == 'w') MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.primary
+                                    }
                                     Text(
-                                        text = getChessSymbol(piece),
+                                        text = getChessSymbol(piece, chessSkin),
                                         fontSize = 32.sp,
-                                        color = pieceColor
+                                        color = pieceColor,
+                                        style = if (chessSkin == "Neon") androidx.compose.ui.text.TextStyle(shadow = androidx.compose.ui.graphics.Shadow(color = pieceColor, blurRadius = 8f)) else androidx.compose.ui.text.TextStyle.Default
                                     )
                                 }
                             }
@@ -236,10 +267,25 @@ fun initChessBoard(): Array<Array<String>> {
     )
 }
 
-fun getChessSymbol(piece: String): String {
-    return when (piece.substring(1)) {
-        "K" -> "♚"; "Q" -> "♛"; "R" -> "♜"; "B" -> "♝"; "N" -> "♞"; "P" -> "♟"
-        else -> ""
+fun getChessSymbol(piece: String, skin: String = "Classic"): String {
+    val isWhite = piece.first() == 'w'
+    return if (skin == "Outlined") {
+        if (isWhite) {
+            when (piece.substring(1)) {
+                "K" -> "♔"; "Q" -> "♕"; "R" -> "♖"; "B" -> "♗"; "N" -> "♘"; "P" -> "♙"
+                else -> ""
+            }
+        } else {
+            when (piece.substring(1)) {
+                "K" -> "♚"; "Q" -> "♛"; "R" -> "♜"; "B" -> "♝"; "N" -> "♞"; "P" -> "♟"
+                else -> ""
+            }
+        }
+    } else {
+        when (piece.substring(1)) {
+            "K" -> "♚"; "Q" -> "♛"; "R" -> "♜"; "B" -> "♝"; "N" -> "♞"; "P" -> "♟"
+            else -> ""
+        }
     }
 }
 

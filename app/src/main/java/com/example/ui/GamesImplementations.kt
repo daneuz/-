@@ -1038,20 +1038,28 @@ fun CardsGameView(viewModel: com.example.viewmodel.ChatViewModel? = null, mode: 
         "sunset_orange" to "Sunset Warmth"
     )
 
-    val skins = listOf("classic", "neon", "cyber", "ghostly", "theme_core")
+    val skins = listOf("classic", "neon", "cyber", "ghostly", "theme_core", "emerald", "ruby", "sapphire", "amethyst")
     val skinNamesRu = mapOf(
         "classic" to "Классический красный",
         "neon" to "Неоновый синий",
         "cyber" to "Кибер золото",
         "ghostly" to "Призрачное серебро",
-        "theme_core" to "Тема системы"
+        "theme_core" to "Тема системы",
+        "emerald" to "Изумрудный",
+        "ruby" to "Рубиновый",
+        "sapphire" to "Сапфировый",
+        "amethyst" to "Аметистовый"
     )
     val skinNamesEn = mapOf(
         "classic" to "Classic Red",
         "neon" to "Neon Blue",
         "cyber" to "Cyber Gold",
         "ghostly" to "Ghostly Silver",
-        "theme_core" to "System Theme"
+        "theme_core" to "System Theme",
+        "emerald" to "Emerald Green",
+        "ruby" to "Ruby Red",
+        "sapphire" to "Sapphire Blue",
+        "amethyst" to "Amethyst Purple"
     )
 
     // Game Preferences
@@ -2175,6 +2183,7 @@ fun DurakCardRender(
         "neon" -> Color(0xFF0F0018)
         "cyber" -> Color(0xFF1E1E24)
         "ghostly" -> Color(0xEAD0DFFF)
+        "emerald", "ruby", "sapphire", "amethyst" -> Color(0xFFFAF9F6)
         "theme_core" -> MaterialTheme.colorScheme.surfaceVariant
         else -> Color.White
     }
@@ -2183,6 +2192,10 @@ fun DurakCardRender(
         "neon" -> Color(0xFFE040FB)
         "cyber" -> Color(0xFFFFD700)
         "ghostly" -> Color(0xFF546E7A)
+        "emerald" -> Color(0xFF2E7D32)
+        "ruby" -> Color(0xFFC62828)
+        "sapphire" -> Color(0xFF1565C0)
+        "amethyst" -> Color(0xFF6A1B9A)
         "theme_core" -> MaterialTheme.colorScheme.primary
         else -> Color(0xFFD32F2F) // Classic red back
     }
@@ -2191,6 +2204,10 @@ fun DurakCardRender(
         "neon" -> Color(0xFF00E5FF)
         "cyber" -> Color(0xFFFFD700)
         "ghostly" -> Color(0xFF90A4AE)
+        "emerald" -> Color(0xFF4CAF50)
+        "ruby" -> Color(0xFFE53935)
+        "sapphire" -> Color(0xFF1E88E5)
+        "amethyst" -> Color(0xFF8E24AA)
         "theme_core" -> MaterialTheme.colorScheme.outline
         else -> Color(0xFFE0E0E0)
     }
